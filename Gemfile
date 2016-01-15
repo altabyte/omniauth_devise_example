@@ -1,5 +1,7 @@
 source 'https://rubygems.org'
 
+# Must be before other gems that rely on environmental variables!
+gem 'dotenv-rails', require: 'dotenv/rails-now', groups: [:development, :test]
 
 gem 'rails', '4.2.5'
 
