@@ -31,5 +31,28 @@ module OmniauthDevise
 
     # Do not swallow errors in after_commit/after_rollback callbacks.
     config.active_record.raise_in_transactional_callbacks = true
+
+
+    #
+    # !!IMPORTANT!!
+    #
+    # Gmail has an extra security step or feature which prevents third party apps
+    # such as this from connecting to your account.
+    #
+    # You must go to your account settings, click on 'Connected apps & sites',
+    # scroll to the bottom and ensure 'Allow less secure apps' is 'ON'
+    #
+    config.action_mailer.default_url_options = { host: 'localhost', port: 3000 }
+    config.action_mailer.perform_deliveries = true
+    config.action_mailer.delivery_method = :smtp
+    config.action_mailer.smtp_settings = {
+        address:              'smtp.gmail.com',
+        port:                  587,
+        domain:               'gmail.com',
+        user_name:            ENV['GMAIL_USERNAME'],
+        password:             ENV['GMAIL_PASSWORD'],
+        authentication:       :plain,
+        enable_starttls_auto: true
+    }
   end
 end
