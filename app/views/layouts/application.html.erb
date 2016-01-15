@@ -1,14 +1,35 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>OmniauthDevise</title>
-  <%= stylesheet_link_tag    'application', media: 'all', 'data-turbolinks-track' => true %>
+  <title>OmniAuth Devise Example</title>
+  <meta name="description" content="An example of how to user OmniAuth with Devise for Facebook and Linkedin log ins an registrations."/>
+  <meta name="keywords" content="OmniAuth, Devise, Facebook, Linkedin, sign in, log in, registration">
+  <%= stylesheet_link_tag 'application', media: 'all', 'data-turbolinks-track' => true %>
   <%= javascript_include_tag 'application', 'data-turbolinks-track' => true %>
   <%= csrf_meta_tags %>
 </head>
 <body>
+<header>
+  <nav id="access-links">
+    <% if user_signed_in? -%>
+        <%= current_user.email %> &nbsp;
+        <%= link_to 'Logout', destroy_user_session_path, method: :delete, confirm: 'Are you sure you want to log out?' %>
+    <% else -%>
+        <%= link_to (t 'devise.fields.login'), new_user_session_path %>
+    <% end -%>
+  </nav>
+  <div id="flash">
+    <% flash.each do |type, msg| %>
+        <%= content_tag :p, msg, class: "#{type} flash" %>
+    <% end %>
+  </div>
+</header>
 
-<%= yield %>
+<div id="<%= controller_name %>">
+  <div id="<%= action_name %>" class="action-content">
+    <%= yield %>
+  </div>
+</div>
 
 </body>
 </html>
