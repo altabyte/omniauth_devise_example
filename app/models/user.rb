@@ -1,6 +1,6 @@
 class User < ActiveRecord::Base
 
-  TEMP_EMAIL_PREFIX = 'temp@email'
+  TEMP_EMAIL_PREFIX = '4JxXB29SN7cAVsa@email'
   TEMP_EMAIL_REGEX  = /\A#{TEMP_EMAIL_PREFIX}/i
 
   has_many :identities
@@ -18,8 +18,7 @@ class User < ActiveRecord::Base
          omniauth_providers: [:linkedin, :facebook]
 
   validates :encrypted_password, presence: true
-  validates :email, presence: true, uniqueness: true
-  validates :email, format: { without: TEMP_EMAIL_REGEX }, on: :update
+  validates :email, presence: true, uniqueness: true, format: { with: /\A([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})\z/i, on: [:create, :update] }
 
 
   # Find the User whose details match the auth data hash returned by the OAuth provider
@@ -34,35 +33,27 @@ class User < ActiveRecord::Base
     # to prevent the identity being locked with accidentally created accounts.
     # Note that this may leave zombie accounts (with no associated identity) which
     # can be cleaned up at a later date.
-    user = signed_in_resource ? signed_in_resource : identity.user
+    user = signed_in_resource || identity.user
 
-    # Create the user if needed
+    # Create the user if not found
     if user.nil?
-
-      # Get the existing user by email if the provider gives us a verified email.
-      # If no verified email was provided we assign a temporary email and ask the
-      # user to verify it on the next step via UsersController.finish_signup
-      #
-      # Note: Facebook does not return auth.info.verified
-      #
-      email_is_verified = auth.info.email && auth.provider == 'facebook' || (auth.info.verified || auth.info.verified_email)
-      email = auth.info.email if email_is_verified
-      user = User.where(email: email).first if email
-
-      # Create the user if it's a new registration
+      email = auth.info.email
+      user = User.where(email: email).first
       if user.nil?
+        email = "#{TEMP_EMAIL_PREFIX}-#{auth.uid}-#{auth.provider}.com" if email.blank?
         user = User.new(
             #name: auth.extra.raw_info.name,
-            #username: auth.info.nickname || auth.uid,
+            #username: auth.info.nickname,
             email: email ? email : "#{TEMP_EMAIL_PREFIX}-#{auth.uid}-#{auth.provider}.com",
             password: Devise.friendly_token[0,20]
         )
-        user.skip_confirmation!
+        user.skip_confirmation! # Skip Devise.confirmable
         user.save!
       end
     end
 
-    # Associate the identity with the user if needed
+    # Associate the identity with the user if necessary.
+    # This should only be necessary when linking an 'additional' OAuth account to the user.
     if identity.user != user
       identity.user = user
       identity.save!
@@ -70,7 +61,7 @@ class User < ActiveRecord::Base
     user
   end
 
-  def email_verified?
-    self.email && self.email !~ TEMP_EMAIL_REGEX
+  def temporary_email?
+    !(self.email =~ TEMP_EMAIL_REGEX).nil?
   end
 end
