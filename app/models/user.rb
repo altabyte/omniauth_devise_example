@@ -1,7 +1,6 @@
 class User < ActiveRecord::Base
 
-  TEMP_EMAIL_PREFIX = '4JxXB29SN7cAVsa@email'
-  TEMP_EMAIL_REGEX  = /\A#{TEMP_EMAIL_PREFIX}/i
+  TEMP_EMAIL_PREFIX = 'Change_Me_@email'
 
   has_many :identities
 
@@ -47,7 +46,7 @@ class User < ActiveRecord::Base
             email: email ? email : "#{TEMP_EMAIL_PREFIX}-#{auth.uid}-#{auth.provider}.com",
             password: Devise.friendly_token[0,20]
         )
-        user.skip_confirmation! # Skip Devise.confirmable
+        user.skip_confirmation! if user.respond_to?('skip_confirmation!') # Skip Devise.confirmable
         user.save!
       end
     end
@@ -62,6 +61,6 @@ class User < ActiveRecord::Base
   end
 
   def temporary_email?
-    !(self.email =~ TEMP_EMAIL_REGEX).nil?
+    !(self.email =~ /\A#{TEMP_EMAIL_PREFIX}/i).nil?
   end
 end
